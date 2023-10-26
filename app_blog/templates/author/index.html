@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            text-align: center;
+        }
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+            width: 80%;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+        }
+
+        /* 添加样式以覆盖整个屏幕 */
+        #imageModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+        #imageModal img {
+            max-width: 1080px;
+            max-height: 720px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        var socket = io.connect('http://' + {{ ServerIP | tojson | safe }} + ':' + {{ ServerPort | tojson | safe }});
+
+        // 在连接成功时接收初始数据
+        // socket.on('initial_data', function(data) {
+        //     var jsonData = JSON.parse(data); // 将 JSON 字符串转换为 JavaScript 对象
+        //     updateTable(jsonData);
+        // });
+
+        // 在数据更新时接收通知
+        socket.on('update_data', function(message) {
+            alert(message);
+            // 可以选择刷新数据或执行其他操作以更新页面
+        });
+
+        socket.on('update_data_information', function(data) {
+	    var searchParams = new URLSearchParams(window.location.search);
+            // 檢索搜索條件的值
+            var licensePlate = searchParams.get("license_plate");
+            var startDate = searchParams.get("start_date");
+            var endDate = searchParams.get("end_date");
+            var status = searchParams.get("status_type");
+
+            if (licensePlate == '' && startDate == '' && endDate == ''  && status == 'Normal') {
+                if (prepage === undefined)
+                {
+                    prepage = 1;
+                }
+            }
+            if(prepage == 1)
+            {
+                var jsonData = JSON.parse(data); // 将 JSON 字符串转换为 JavaScript 对象
+                updateTable(jsonData);
+            }
+            else
+            {
+                console.log('updateTable faile prepage != 1, prepage = ' + prepage);
+            }
+        });
+
+        // 添加点击事件处理程序来显示图像模态窗口
+        $(document).on('click', 'img', function() {
+            var imgSrc = $(this).attr('src');
+            $('#imageModal img').attr('src', imgSrc);
+            $('#imageModal').show();
+        });
+
+        // 添加关闭模态窗口的事件处理程序
+        $('#imageModal').click(function(event) {
+            if (event.target === this) {
+                $(this).hide();
+            }
+        });
+
+        function updateTable(data) {
+            var tableHTML = '<table><tr><th>ID</th><th>車種</th><th>車牌</th><th>時間</th><th>地點</th><th>照片</th><th>狀態</th></tr>';
+            data.forEach(function(row) {
+                tableHTML += '<tr>';
+                tableHTML += '<td>' + row[0] + '</td>';
+                tableHTML += '<td>' + row[1] + '</td>';
+                tableHTML += '<td>' + row[2] + '</td>';
+                tableHTML += '<td>' + row[3] + '</td>';
+                tableHTML += '<td>' + row[4] + '</td>';
+                tableHTML += '<td><img src="data:image/jpeg;base64,' + row[5] + '" width="192" height="108"></td>';
+                tableHTML += '<td>' + row[6] + '</td>';
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</table>';
+            $('#carTableContent').html(tableHTML);
+        }
+
+	    var prepage;
+
+        function loadPage(page) {
+            var url = '/?page=' + page;
+            var searchParams = new URLSearchParams(window.location.search);
+
+            // 檢索搜索條件的值
+            var licensePlate = searchParams.get("license_plate");
+            var startDate = searchParams.get("start_date");
+            var endDate = searchParams.get("end_date");
+            var status = searchParams.get("status_type");
+            prepage = page
+
+            if (licensePlate == '' && startDate == '' && endDate == ''  && status == 'Normal') {
+                if (prepage === undefined)
+                {
+                    prepage = 1;
+                }
+            }
+            
+            if (licensePlate) {
+                url += '&license_plate=' + encodeURIComponent(licensePlate);
+            }
+
+            if (startDate) {
+                url += '&start_date=' + encodeURIComponent(startDate);
+            }
+
+            if (endDate) {
+                url += '&end_date=' + encodeURIComponent(endDate);
+            }
+
+            if (status) {
+                url += '&status_type=' + encodeURIComponent(status);
+            }
+
+            console.log('url ' + url);
+
+            // $('#carTable').empty();
+            // $('#searchForm').empty();
+            $.get(url, function(data) {
+                $('#carTable').html(data);
+            });
+        }
+        // 将 prepage 发送到后端
+        $.ajax({
+            url: '/updatePrepage',  // 后端路由，你需要在 Flask 中创建这个路由
+            method: 'POST',
+            data: { prepage: prepage },
+            success: function(response) {
+            console.log('prepage 已发送到后端');
+            console.log('prepage = ', prepage);
+            }
+        });
+    </script>
+</head>
+<body>
+    <div id="carTable">
+        <h1>車輛列表</h1>
+        <div id="searchForm">
+            <form method="GET" action="/">
+                <input id="license_plateText" type="text" name="license_plate" placeholder="車牌搜尋">
+                <input id="start_dateText" type="datetime-local" name="start_date" placeholder="開始日期">
+                <input id="end_dateText" type="datetime-local" name="end_date" placeholder="結束日期">
+                <select id="searchType" name="status_type">
+                    <option value="Normal">Normal</option>
+                    <option value="Revers">Revers</option>
+                    <option value="OverTime">OverTime</option>
+                    <option value="Fallen">Fallen</option>
+                </select>
+                <button id="SearchButton" type="submit">搜尋</button>
+            </form>
+        </div>
+        <div id="carTableContent">
+            <!-- <table>
+                <tr>
+                    <th>ID</th>
+                    <th>車種</th>
+                    <th>車牌</th>
+                    <th>時間</th>
+                    <th>地點</th>
+                    <th>照片</th>
+                </tr>
+                {% for row in car_data %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                        <td>{{ row[2] }}</td>
+                        <td>{{ row[3] }}</td>
+                        <td>{{ row[4] }}</td>
+                        <td><img src="data:image/jpeg;base64,{{ row[5] }}" width="192" height="108"></td>
+                    </tr>
+                {% endfor %}
+            </table> -->
+            {% if car_data %}
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>車種</th>
+                    <th>車牌</th>
+                    <th>時間</th>
+                    <th>地點</th>
+                    <th>照片</th>
+                    <th>狀態</th>
+                </tr>
+                {% for row in car_data %}
+                    <tr>
+                        <td>{{ row[0] }}</td>
+                        <td>{{ row[1] }}</td>
+                        <td>{{ row[2] }}</td>
+                        <td>{{ row[3] }}</td>
+                        <td>{{ row[4] }}</td>
+                        <td><img src="data:image/jpeg;base64,{{ row[5] }}" width="192" height="108"></td>
+                        <td>{{ row[6] }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+                <p>No results found.</p>
+            {% endif %}
+        </div>
+        <div class="pagination">
+            <button id="firstButton" onclick="loadPage({{ 1 }})" class="btn btn-primary" {% if page == 1 %}disabled{% endif %}>First</button>
+            <button id="previousButton" onclick="loadPage({{ page - 1 }})" class="btn btn-primary" {% if page == 1 %}disabled{% endif %}>Previous</button>
+            {% if total_pages <= 10 %}
+                {% for i in range(1, total_pages + 1) %}
+                    <button onclick="loadPage({{ i }})" {% if i == page %}disabled{% endif %}>{{ i }}</button>
+                {% endfor %}
+            {% else %}
+                {% set start = 1 %}
+                {% set end = 10 %}
+                {% if page > 5 %}
+                    {% set start = page - 4 %}
+                    {% set end = page + 5 %}
+                    {% if end > total_pages %}
+                        {% set start = total_pages - 9 %}
+                        {% set end = total_pages %}
+                    {% endif %}
+                {% endif %}
+                {% for i in range(start, end + 1) %}
+                    <button onclick="loadPage({{ i }})" {% if i == page %}disabled{% endif %}>{{ i }}</button>
+                {% endfor %}
+                <button onclick="loadPage({{ page + 1 }})" class="btn btn-primary" {% if page == total_pages %}disabled{% endif %}>Next</button>
+                <button id="lastButton" onclick="loadPage({{ total_pages }})" class="btn btn-primary" {% if page == total_pages %}disabled{% endif %}>Last</button>
+            {% endif %}
+        </div>
+        <!-- 模态窗口用于显示图像 -->
+        <div id="imageModal">
+            <img src="" alt="Image" />
+        </div>
+    </div>
+</body>
+</html>
