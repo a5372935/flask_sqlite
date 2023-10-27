@@ -18,7 +18,7 @@
 
         /* 添加样式以覆盖整个屏幕 */
         #imageModal {
-            display: none; /* 將初始狀態設置為可見 */
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -53,15 +53,24 @@
             // 可以选择刷新数据或执行其他操作以更新页面
         });
 
+        var prepage;
+
         socket.on('update_data_information', function(data) {
-	    var searchParams = new URLSearchParams(window.location.search);
+	        var searchParams = new URLSearchParams(window.location.search);
             // 檢索搜索條件的值
             var licensePlate = searchParams.get("license_plate");
             var startDate = searchParams.get("start_date");
             var endDate = searchParams.get("end_date");
             var status = searchParams.get("status_type");
 
-            if (licensePlate == '' && startDate == '' && endDate == ''  && status == 'Normal') {
+            if (!searchParams.has("license_plate") && !searchParams.has("start_date") && !searchParams.has("end_date") && !searchParams.has("status_type")) {
+                if (prepage === undefined)
+                {
+                    prepage = 1;
+                }
+            }
+
+            if (licensePlate == '' && startDate == '' && endDate == '' && status == 'Normal') {
                 if (prepage === undefined)
                 {
                     prepage = 1;
@@ -111,8 +120,6 @@
             $('#carTableContent').html(tableHTML);
         }
 
-	    var prepage;
-
         function loadPage(page) {
             var url = '/?page=' + page;
             var searchParams = new URLSearchParams(window.location.search);
@@ -123,13 +130,6 @@
             var endDate = searchParams.get("end_date");
             var status = searchParams.get("status_type");
             prepage = page
-
-            if (licensePlate == '' && startDate == '' && endDate == ''  && status == 'Normal') {
-                if (prepage === undefined)
-                {
-                    prepage = 1;
-                }
-            }
             
             if (licensePlate) {
                 url += '&license_plate=' + encodeURIComponent(licensePlate);

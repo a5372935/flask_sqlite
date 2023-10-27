@@ -73,21 +73,13 @@ def convert_to_db_datetime(datetime_str):
 
     return db_datetime
 
-# 創建一個緩存，設置最大緩存大小
-# cache = LRUCache(maxsize=128)
-
-total_pages = 1  # 設置默認值
+current_page = 1
 
 # 在主页的路由中处理搜索请求
 @app.route('/')
 def index():
-    page = request.args.get('page', 1, type=int)
-
-    # 嘗試從緩存中獲取數據
-    # car_data = cache.get(page)
-
-    # if car_data is None:
-    # 如果緩存中不存在數據，則執行新的查詢並存儲到緩存
+    global current_page
+    current_page = request.args.get('page', 1, type=int)
     license_plate = request.args.get('license_plate')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
@@ -96,6 +88,8 @@ def index():
     conn = sqlite3.connect(dbPath)
     cursor = conn.cursor()
 
+    print('current_page = ', current_page)
+
     # 构建SQL查询语句，考虑搜索条件
     count_query = 'SELECT * FROM CarInfo WHERE 1 = 1'  # WHERE 1=1 用于构建动态查询条件
 
@@ -103,6 +97,7 @@ def index():
         count_query += f" AND LicensePlate LIKE '%{license_plate}%'"
 
     if start_date and end_date:
+    # 将输入的日期时间字符串转换为数据库格式
         # start_date_db = convert_to_db_datetime(start_date)
         # end_date_db = convert_to_db_datetime(end_date)
         count_query += f" AND Time >= '{start_date}' AND Time <= '{end_date}'"
@@ -120,22 +115,20 @@ def index():
     total_count = len(cursor.fetchall())  # 總記錄數
 
     # 计算总页数
-    # if total_count > 0:
-    global total_pages
     total_pages = total_count // PER_PAGE  # 使用整除運算符 '//' 得到整數部分
     if total_count % PER_PAGE != 0:
         total_pages += 1
 
-    count_query += f' ORDER BY ID DESC LIMIT {PER_PAGE} OFFSET {(page - 1) * PER_PAGE}'
+    # print('total_count = ', total_count)
+    # print('total_pages = ', total_pages)
+
+    count_query += f' ORDER BY ID DESC LIMIT {PER_PAGE} OFFSET {(current_page - 1) * PER_PAGE}'
 
     cursor.execute(count_query)
     car_data = cursor.fetchall()
     conn.close()
 
-    # 存儲檢索到的數據到緩存
-    # cache[page] = car_data
-    
-    return render_template('index.html', car_data=car_data, page=page, PER_PAGE=PER_PAGE, ServerIP=ServerIP, ServerPort=ServerPort, total_pages=total_pages)
+    return render_template('index.html', car_data=car_data, page=current_page, PER_PAGE=PER_PAGE, ServerIP=ServerIP, ServerPort=ServerPort, total_pages=total_pages)
 
 
 # 在WebSocket连接时，将初始数据发送给客户端
