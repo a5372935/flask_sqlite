@@ -18,7 +18,7 @@
 
         /* 添加样式以覆盖整个屏幕 */
         #imageModal {
-            display: none;
+            display: none; /* 將初始狀態設置為可見 */
             position: fixed;
             top: 0;
             left: 0;
@@ -78,18 +78,20 @@
             }
         });
 
-        // 添加点击事件处理程序来显示图像模态窗口
-        $(document).on('click', 'img', function() {
-            var imgSrc = $(this).attr('src');
-            $('#imageModal img').attr('src', imgSrc);
-            $('#imageModal').show();
-        });
+        $(document).ready(function() {
+            // 添加点击事件处理程序来显示图像模态窗口
+            $(document).on('click', 'img', function() {
+                var imgSrc = $(this).attr('src');
+                $('#imageModal img').attr('src', imgSrc);
+                $('#imageModal').show();
+            });
 
-        // 添加关闭模态窗口的事件处理程序
-        $('#imageModal').click(function(event) {
-            if (event.target === this) {
-                $(this).hide();
-            }
+            // 添加关闭模态窗口的事件处理程序
+            $('#imageModal').click(function(event) {
+                if (event.target === this) {
+                    $(this).hide();
+                }
+            });
         });
 
         function updateTable(data) {
