@@ -59,18 +59,20 @@
 	        var searchParams = new URLSearchParams(window.location.search);
             // 檢索搜索條件的值
             var licensePlate = searchParams.get("license_plate");
+            var CarType = searchParams.get("CarType");
+            var CamPlace = searchParams.get("Cam_Place");
             var startDate = searchParams.get("start_date");
             var endDate = searchParams.get("end_date");
             var status = searchParams.get("status_type");
 
-            if (!searchParams.has("license_plate") && !searchParams.has("start_date") && !searchParams.has("end_date") && !searchParams.has("status_type")) {
+            if (!searchParams.has("license_plate") && !searchParams.has("CarType") && !searchParams.has("Cam_Place") && !searchParams.has("start_date") && !searchParams.has("end_date") && !searchParams.has("status_type")) {
                 if (prepage === undefined)
                 {
                     prepage = 1;
                 }
             }
 
-            if (licensePlate == '' && startDate == '' && endDate == '' && status == 'Normal') {
+            if (licensePlate == '' && CarType == '' && CamPlace == '' && startDate == '' && endDate == '' && status == '') {
                 if (prepage === undefined)
                 {
                     prepage = 1;
@@ -126,6 +128,8 @@
 
             // 檢索搜索條件的值
             var licensePlate = searchParams.get("license_plate");
+            var CarType = searchParams.get("CarType");
+            var CamPlace = searchParams.get("Cam_Place");
             var startDate = searchParams.get("start_date");
             var endDate = searchParams.get("end_date");
             var status = searchParams.get("status_type");
@@ -133,6 +137,14 @@
             
             if (licensePlate) {
                 url += '&license_plate=' + encodeURIComponent(licensePlate);
+            }
+
+            if (CarType) {
+                url += '&CarType=' + encodeURIComponent(CarType);
+            }
+
+            if (CamPlace) {
+                url += '&Cam_Place=' + encodeURIComponent(CamPlace);
             }
 
             if (startDate) {
@@ -173,12 +185,16 @@
         <div id="searchForm">
             <form method="GET" action="/">
                 <input id="license_plateText" type="text" name="license_plate" placeholder="車牌搜尋">
+                <input id="CarTypeText" type="text" name="CarType" placeholder="車種或掉落物搜尋">
+                <input id="Cam_PlaceText" type="text" name="Cam_Place" placeholder="(攝影機編號_地點)搜尋">
                 <input id="start_dateText" type="datetime-local" name="start_date" placeholder="開始日期">
                 <input id="end_dateText" type="datetime-local" name="end_date" placeholder="結束日期">
                 <select id="searchType" name="status_type">
+                    <option value="">Default</option>
                     <option value="Normal">Normal</option>
                     <option value="Revers">Revers</option>
                     <option value="OverTime">OverTime</option>
+                    <option value="LowSpeed">LowSpeed</option>
                     <option value="Fallen">Fallen</option>
                 </select>
                 <button id="SearchButton" type="submit">搜尋</button>

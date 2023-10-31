@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template, jsonify
 import sqlite3
 import base64
+import os
 import socket
 from flask_socketio import SocketIO
 import json
@@ -29,7 +30,7 @@ def get_local_ip_address():
 ServerIP = get_local_ip_address()
 # print(ServerIP)
 ServerPort = '5000'
-dbPath = 'car_info.db'
+dbPath = '/home/rd3/JamesYoloV7Test/Yolov7Project0202/data/info/sqlData/car_info.db'
 
 app = Flask(__name__, template_folder='../templates/author')
 app.config['SERVER_NAME'] = ServerIP + ':' + ServerPort  # Replace with your actual domain and port
@@ -53,8 +54,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
-
 # 分页设置
 PER_PAGE = 5
 
@@ -75,15 +74,23 @@ def convert_to_db_datetime(datetime_str):
 
 current_page = 1
 
+def db_exists(db_path):
+    return os.path.exists(db_path)
+
 # 在主页的路由中处理搜索请求
 @app.route('/')
 def index():
     global current_page
     current_page = request.args.get('page', 1, type=int)
     license_plate = request.args.get('license_plate')
+    CarType = request.args.get('CarType')
+    Location = request.args.get('Location')
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     status = request.args.get('status_type')
+
+    if not db_exists(dbPath):
+        init_db()  # 初始化資料庫
 
     conn = sqlite3.connect(dbPath)
     cursor = conn.cursor()
@@ -95,6 +102,12 @@ def index():
 
     if license_plate:
         count_query += f" AND LicensePlate LIKE '%{license_plate}%'"
+
+    if CarType:
+        count_query += f" AND CarType LIKE '%{CarType}%'"
+
+    if Location:
+        count_query += f" AND Location LIKE '%{Location}%'"
 
     if start_date and end_date:
     # 将输入的日期时间字符串转换为数据库格式
