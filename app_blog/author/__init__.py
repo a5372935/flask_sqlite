@@ -48,7 +48,8 @@ def init_db():
             Time TEXT,
             Location TEXT,
             Image TEXT,
-            Status TEXT
+            Status TEXT, 
+            VideoName
         )
     ''')
     conn.commit()
@@ -165,11 +166,12 @@ def recognize():
     location = request.form.get('location')
     photo_data = request.form.get('photo_data')
     status_data = request.form.get('status_data')
+    VideoName = request.form.get('VideoName')
 
     conn = sqlite3.connect(dbPath)
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO CarInfo (CarType, LicensePlate, Time, Location, Image, Status) VALUES (?, ?, ?, ?, ?, ?)",
-                   (car_type, license_plate, time, location, photo_data, status_data))
+    cursor.execute("INSERT INTO CarInfo (CarType, LicensePlate, Time, Location, Image, Status, VideoName) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (car_type, license_plate, time, location, photo_data, status_data, VideoName))
     conn.commit()
     conn.close()
     socketio.emit('update_data', 'Data has been updated')  # 发送WebSocket消息以通知客户端数据已更新
