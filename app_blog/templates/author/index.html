@@ -17,7 +17,7 @@
         }
 
         /* 添加样式以覆盖整个屏幕 */
-        /* #imageModal {
+        #imageModal {
             display: none;
             position: fixed;
             top: 0;
@@ -33,7 +33,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-        } */
+        }
 
         /* 添加样式以覆盖整个屏幕 */
         #videoModal {
@@ -125,20 +125,55 @@
             // });
 
             // 修改点击事件处理程序来显示视频模态窗口
+            // $(document).off('click', 'img').on('click', 'img', function(e) {
+            //     e.stopImmediatePropagation();
+            //     // var videoSrc = "http://192.168.1.141:8010/2177_Reverse.mp4"; // 将此替换为您要显示的视频的URL
+            //     var videoSrc = "http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4"; // 使用 .text() 获取 row[7] 的文本内容
+            //     var videoModal = $('#videoModal');
+
+            //     // 添加新的视频内容
+            //     var videoHTML = '<video controls width="1080" height="720" autoplay>' +
+            //                         '<source src="' + videoSrc + '" type="video/mp4">' +
+            //                         'Your browser does not support the video tag.' +
+            //                     '</video>';
+            //     videoModal.html(videoHTML);
+            //     console.log(videoHTML);
+            //     videoModal.show();
+            // });
+
             $(document).off('click', 'img').on('click', 'img', function(e) {
                 e.stopImmediatePropagation();
-                // var videoSrc = "http://192.168.1.141:8010/2177_Reverse.mp4"; // 将此替换为您要显示的视频的URL
-                var videoSrc = "http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4"; // 使用 .text() 获取 row[7] 的文本内容
-                var videoModal = $('#videoModal');
+                var clickedImage = $(this);
+                // console.log(clickedImage);
+                // var videoSrc = "http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4";
+                var videoSrc = "http://192.168.1.141:5000/proxy?video_url=http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4";
 
-                // 添加新的视频内容
-                var videoHTML = '<video controls width="1080" height="720" autoplay>' +
-                                    '<source src="' + videoSrc + '" type="video/mp4">' +
-                                    'Your browser does not support the video tag.' +
-                                '</video>';
-                videoModal.html(videoHTML);
-                console.log(videoHTML);
-                videoModal.show();
+                // 使用 jQuery 的 ajax 函数检查视频是否存在
+                $.ajax({
+                    url: videoSrc,
+                    type: 'HEAD',
+                    error: function() {
+                        // 视频不存在时的处理逻辑
+                        // alert('Videos not found');
+                        // 这里你可以添加显示图像的代码或其他处理逻辑
+                        var imgSrc = clickedImage.attr('src');
+                        
+                        $('#imageModal img').attr('src', imgSrc);
+                        $('#imageModal').show();
+                        console.log(imgSrc);
+                    },
+                    success: function() {
+                        // 视频存在时的处理逻辑
+                        var videoModal = $('#videoModal');
+                        var videoHTML = '<video controls width="1080" height="720" autoplay>' +
+                                            '<source src="' + videoSrc + '" type="video/mp4">' +
+                                            'Your browser does not support the video tag.' +
+                                        '</video>';
+                        videoModal.html(videoHTML);
+                        console.log(videoHTML);
+                        videoModal.show();
+                    }
+                });
             });
 
             // 添加关闭视频模态窗口的事件处理程序
@@ -150,6 +185,14 @@
                     videoElement.currentTime = 0; // 将视频重置到起始位置
                     videoModal.hide();
                 }
+            });
+            $(document).on('click', '#imageModal', function(event) {
+                // 添加关闭模态窗口的事件处理程序
+                $('#imageModal').click(function(event) {
+                    if (event.target === this) {
+                        $(this).hide();
+                    }
+                });
             });
         });
 
@@ -325,9 +368,9 @@
             {% endif %}
         </div>
         <!-- 模态窗口用于显示图像 -->
-        <!-- <div id="imageModal">
+        <div id="imageModal">
             <img src="" alt="Image" />
-        </div> -->
+        </div>
         <!-- 添加视频模态窗口 -->
         <div id="videoModal">
             

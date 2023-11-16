@@ -1,5 +1,7 @@
 from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 import sqlite3
+import requests
 import base64
 import os
 import socket
@@ -33,8 +35,25 @@ ServerPort = '5000'
 dbPath = '/home/rd3/JamesYoloV7Test/Yolov7Project0202/data/info/sqlData/car_info.db'
 
 app = Flask(__name__, template_folder='../templates/author')
+CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['SERVER_NAME'] = ServerIP + ':' + ServerPort  # Replace with your actual domain and port
 socketio = SocketIO(app)
+
+@app.route('/proxy', methods=['GET'])
+def proxy():
+    video_url = request.args.get('video_url')
+    if not video_url:
+        return jsonify({'error': 'Missing video_url parameter'}), 400
+
+    try:
+        response = requests.get(video_url, stream=True)
+        headers = {key: value for (key, value) in response.headers.items()}
+        # 添加 Access-Control-Allow-Origin 標頭
+        headers['Access-Control-Allow-Origin'] = '*'
+
+        return response.content, response.status_code, headers
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # SQLite数据库初始化
 def init_db():
@@ -49,7 +68,7 @@ def init_db():
             Location TEXT,
             Image TEXT,
             Status TEXT, 
-            VideoName
+            VideoName TEXT
         )
     ''')
     conn.commit()
