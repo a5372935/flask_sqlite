@@ -146,8 +146,8 @@
                 var clickedImage = $(this);
                 // console.log(clickedImage);
                 // var videoSrc = "http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4";
-                var videoSrc = "http://192.168.1.141:5000/proxy?video_url=http://192.168.1.141:8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4";
-
+                var videoSrc = 'http://' + {{ ServerIP | tojson | safe }} + ':' + {{ ServerPort | tojson | safe }} + "/proxy?video_url=" + 'http://' + {{ ServerIP | tojson | safe }} + ":8010/" + $(this).closest('tr').find('td:eq(7)').text() + ".mp4";
+                
                 // 使用 jQuery 的 ajax 函数检查视频是否存在
                 $.ajax({
                     url: videoSrc,
